@@ -1,0 +1,94 @@
+/* 
+  .flexContainer {
+    display: flex;
+    justify-content: space-around; 
+    align-items: center; 
+    background-color: transparent;
+    padding: 10px;
+    margin-bottom: 10px;
+    /* border: 1px solid white; */
+    /* color: white;
+  }
+  
+  .amountsYouOwe {
+    border: 1px solid white; 
+    background-color: blue;
+    text-align: center;
+    flex: 1;
+  }
+
+  .amountsOwedToYou {
+    border: 1px solid white;
+    text-align: center;
+    flex: 1;
+    background-color: transparent;
+  } */
+ 
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+
+  .flexContainer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    color: white;
+  }
+  
+
+  .amountsYouOwe {
+    text-align: center;
+    flex: 1;
+    padding: 20px;
+    background-color: transparent;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    min-height: 200px;
+  }
+  
+  .amountsOwedToYou {
+    text-align: center;
+    flex: 1;
+    padding: 20px;
+    background-color:blue;
+    border-radius: 10px;
+    min-height: 200px;
+  }
+  .amountsOwedToYou:hover{
+    background-color:transparent;
+    border: 1px solid #ccc;
+  }
+
+  .settleButton {
+    background-color: blue;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    margin-top: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .settleButton:hover {
+    background-color: transparent;
+    border: 1px solid white;
+  }
+  
+  h2 {
+    margin-bottom: 10px;
+    font-size: 1.2rem;
+  }
+ 
+  .oweItem {
+    margin-top: 10px;
+    font-size: 1rem;
+  }
+  
+  

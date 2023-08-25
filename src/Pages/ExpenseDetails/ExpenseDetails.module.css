@@ -1,0 +1,99 @@
+.customModal {
+    width: 70%;
+    background-color: #1f2e45;
+    color: white;
+    padding: 2.5rem;
+    border-radius: 5px;
+    margin: auto;
+    max-height: 80vh;
+    overflow-y: auto;
+    border: 1px solid #242629;
+    border-radius: 0.8rem;
+    font-family: Arial, sans-serif;
+  }
+
+  .customModal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  
+  .customModal th,
+  .customModal td {
+    border: 1px solid #394b63;
+    padding: 0.8rem; 
+    text-align: center; 
+    font-weight: bold; 
+    width: 100%;
+  }
+  
+  .customModal th {
+    background-color: #394b63;
+    color: white;
+  }
+  .customModal button {
+    background-color: #004db2;
+    color: white;
+    margin-top: 1.5rem;
+    padding: 0.3rem 1.6rem;
+    border: none;
+    border-radius: 0.3rem;
+  }
+.expenseItem {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+    cursor: pointer;
+    background-color: transparent;
+    width: 80%;
+    margin: 0.9rem auto;
+  }
+  
+  .expenseDescription {
+    font-weight: 500;
+    font-size: 1.3rem;
+    color: #c0c0c0;
+  }
+  
+  .expenseAmount {
+    font-size: 1.2em;
+    color: #007bff;
+  }
+  
+  .owedDetails {
+    margin-top: 10px;
+  }
+  
+  .oweItem {
+    color: #ff5722;
+  }
+  .noOweBackground {
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .noOweBackground:hover,.expenseItem:hover {
+    background-color: blue;
+    padding: 0.5rem;
+  }
+  
+  .noOweMessage {
+    font-weight: bold;
+  }  
+  
+  .customOverlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(31, 46, 69, 0.8);
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+  
+  
