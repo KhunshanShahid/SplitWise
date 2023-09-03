@@ -55,20 +55,14 @@
   border: 1px solid #242629;
   border-radius: 0.8rem;
 }
-
 .customMultiSelect,
 .Select {
   background-color: #393c40 !important;
   color: black;
   margin-bottom: 0.1rem;
-  /* text-align: left; */
 }
-.Select{
+.Select {
   width: 80%;
-}
-.customMultiSelect{
-  width: 90%;
-  margin-top: 1rem;
 }
 .customOverlay {
   display: flex;
@@ -149,7 +143,6 @@
   font-size: 1.3rem;
   color: #9ba9a5;
   margin-top: 0.4rem;
-  width: 80%;
 }
 .formStyle h4 {
   color: #d9e3ea;
@@ -169,7 +162,6 @@
   font-size: 1.3rem;
   color: #9ba9a5;
   margin-top: 0.4rem;
-  width: 100%;
 }
 .submitBtn {
   background-color: #4b4acf !important;

@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom"
 import styles from './ErrorPage.module.css'
+import { Link } from "react-router-dom"
 
 const WrongRoute = () => {
   return (

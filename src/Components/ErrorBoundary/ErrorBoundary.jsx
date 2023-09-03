@@ -6,16 +6,14 @@ class ErrorBoundary extends Component {
       super(props);
       this.state = { hasError: false };
     }
-  
     static getDerivedStateFromError() {
       return { hasError: true };
     }
-  
     render() {
       if (this.state.hasError) {
         return <ErrorPage />;
-      }
-  
+      } 
+      // eslint-disable-next-line react/prop-types
       return this.props.children;
     }
   }

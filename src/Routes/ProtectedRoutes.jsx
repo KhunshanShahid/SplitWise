@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoutes(props) {
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line react/prop-types
   const { Comp } = props;
   const [isUser, setIsUser] = useState(false);
 
@@ -17,7 +18,6 @@ export default function ProtectedRoutes(props) {
       }
       setLoading(false); 
     });
-
     return () => unsubscribe();
   }, []);
 

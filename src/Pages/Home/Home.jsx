@@ -1,3 +1,4 @@
+import React from "react";
 import quote from "../../assets/hero-image-01.webp";
 import styles from "./Home.module.css";
 
@@ -6,10 +7,10 @@ function Home() {
     <div className={styles.main}>
       <div className={styles.mainText}>
         <h3>BillBuddy</h3>
-        <h6>
+        <h5>
           Effortless expense collaboration starts here, powered by your
           dependable BillBuddy.
-        </h6>
+        </h5>
         <p>
           BillBuddy redefines shared expense collaboration. Seamlessly powered
           by its dependable support, BillBuddy revolutionizes the way you manage
@@ -26,4 +27,5 @@ function Home() {
   );
 }
 
-export default Home;
+const MemoizedHome = React.memo(Home);
+export default MemoizedHome;

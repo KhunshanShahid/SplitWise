@@ -1,62 +1,49 @@
 import Modal from "react-modal";
 import styles from "./ExpenseDetails.module.css";
-import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { auth, database } from "../../Firebase/firebase";
+import { auth } from "../../Firebase/firebase";
 import { Bars } from "react-loader-spinner";
+import { toast } from "react-toastify";
+import { fetchUserExpenses } from "../../../util/FirebaseApi";
 
 const ExpenseDetails = () => {
   const [expenseData, setExpenseData] = useState([]);
-  const [expenseDetail, setExpenseDetail] = useState([]);
+  const [expenseDetail, setExpenseDetail] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showModal, setshowModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const user = auth.currentUser?.displayName;
-
   useEffect(() => {
-    setLoading(true);
     const fetchData = async () => {
-      const q = collection(database, "expense");
-      const ref = await getDocs(q);
-      const allExpenses = ref.docs.map((doc) => doc.data());
-      // const filteredExpense = allExpenses.filter((expense) => {
-      //   return (
-      //     expense.owed &&
-      //     expense.owed[expense.id] &&
-      //     expense.owed[expense.id].some(
-      //       (participant) =>
-      //         participant.debtor === user || participant.creditor === user
-      //     )
-      //   );
-      // });
-
-    const filteredExpense = allExpenses.filter((expense) => {
-      const hasOwedData = expense.owed?.[expense.id]?.some(
-        (participant) => participant.debtor === user
-      );
-
-      const hasParticipantsData = expense.participants?.some(
-        (participant) => participant.label === user
-      );
-
-      return hasOwedData || hasParticipantsData;
-    });
-
-      setExpenseData(filteredExpense);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const userExpenseDetails = await fetchUserExpenses(user);
+        setExpenseData(userExpenseDetails);
+        setLoading(false);
+      } catch (error) {
+        toast.error("Error fetching expense details: " + error.message);
+        setLoading(false);
+      }
     };
+
     fetchData();
   }, [user]);
 
   const handleExpenseData = (expense) => {
     setExpenseDetail(expense);
-    setshowModal(true);
+    setShowModal(true);
   };
 
   return (
     <>
       {loading ? (
         <div className="vh-100 d-flex justify-content-center align-items-center">
-          <Bars height={80} width={60} color="blue" ariaLabel="bars-loading" visible={true} />
+          <Bars
+            height={80}
+            width={60}
+            color="blue"
+            ariaLabel="bars-loading"
+            visible={true}
+          />
         </div>
       ) : (
         <>
@@ -101,58 +88,72 @@ const ExpenseDetails = () => {
           ) : (
             <h3 className="text-white h-100">No Expense To Show</h3>
           )}
-
           <Modal
             isOpen={showModal}
-            onRequestClose={() => setshowModal(false)}
-            contentLabel="Logout Confirmation"
+            onRequestClose={() => setShowModal(false)}
+            contentLabel="Expense Details"
             className={styles.customModal}
             overlayClassName={styles.customOverlay}
           >
-            <div>Expense Created by: {expenseDetail.creator}</div>
-            <div>
-              <h4>Description: {expenseDetail.description}</h4>
-              <h4>Date:{expenseDetail.date ? expenseDetail.date : "23-08-2023"}</h4>
-              {expenseDetail.participants ? (
-                <>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Order</th>
-                        <th>Paid</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {expenseDetail.participants.map((user) => {
-                        return (
-                          <tr key={user.id} className="text-white">
-                            <td>{user.label}</td>
-                            <td>{user.order}</td>
-                            <td>{user.paid}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </>
-              ) : (
-                <>
-                  Split Equally ==&gt; Paid By:{" "}
-                  <strong>{expenseDetail.paidBy && expenseDetail.paidBy.label}</strong>
-                </>
-              )}
+            {expenseDetail && (
               <div>
-                <img src={expenseDetail.image} className="w-25 mt-3" alt="...Expense" />
+                <h4>Expense Created by: {expenseDetail.creator}</h4>
+                <div>
+                  <h4>Description: {expenseDetail.description}</h4>
+                  <h4>Total Bill: {expenseDetail.totalAmount}</h4>
+                  <h4>
+                    Date:
+                    {expenseDetail.date ? expenseDetail.date : "23-08-2023"}
+                  </h4>
+                  {expenseDetail.participants ? (
+                    <>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            {expenseDetail.participants[0]?.order !==
+                              undefined && <th>Order</th>}
+                            {expenseDetail.participants[0]?.paid !==
+                              undefined && <th>Paid</th>}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {expenseDetail.participants.map((user) => {
+                            return (
+                              <tr key={user.id} className="text-white">
+                                <td>{user.label}</td>
+                                {user.order !== undefined && (
+                                  <td>{user.order}</td>
+                                )}
+                                {user.paid !== undefined && (
+                                  <td>{user.paid}</td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <>
+                      Split Equally ==&gt; Paid By:{" "}
+                      <strong>
+                        {expenseDetail.paidBy && expenseDetail.paidBy.label}
+                      </strong>
+                    </>
+                  )}
+
+                  <div>
+                    <img
+                      src={expenseDetail.image}
+                      className="w-25 mt-3"
+                      alt="...Expense"
+                    />
+                  </div>
+                </div>
+                <button onClick={() => setShowModal(false)}>Close</button>
               </div>
-            </div>
-            <button
-              onClick={() => {
-                setshowModal(false);
-              }}
-            >
-              Close
-            </button>
+            )}
           </Modal>
         </>
       )}

@@ -3,6 +3,7 @@ import { auth } from "../Firebase/firebase";
 import { Navigate } from "react-router-dom";
 
 export default function PrivateRoutes(props) {
+    // eslint-disable-next-line react/prop-types
     const { Comp }=props
     const [isUser,setisUser]=useState(true)
     useEffect(()=>{

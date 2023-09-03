@@ -27,15 +27,15 @@ const Dashboard = () => {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [selectedFriendsUnEqual, setSelectedFriendsUnEqual] = useState([]);
   const [currUser, setCurrUser] = useState({
-    order: 0,
-    paid: 0,
+    order: "",
+    paid: "",
   });
   const [paidByFriend, setPaidByFriend] = useState({});
   const [billImage, setBillImage] = useState();
   const [equalExpenseHandle, setEqualExpenseHandle] = useState({
     date: "",
     desc: "",
-    totalAmount: 0,
+    totalAmount: "",
   });
   const [splitUnEqualData, setSplitUnEqualData] = useState({
     date: "",
@@ -65,10 +65,11 @@ const Dashboard = () => {
       setFriend(newFriends);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching friends data:", error);
+      toast.error("Error fetching friends data:", error);
       setLoading(false);
     }
   };
+
   const handleInputChangeUnEqual = (e) => {
     const { name, value } = e.target;
     setSplitUnEqualData((prevState) => ({
@@ -76,6 +77,7 @@ const Dashboard = () => {
       [name]: value,
     }));
   };
+
   const splitEqualExpense = async (e) => {
     e.preventDefault();
     if (
@@ -100,7 +102,6 @@ const Dashboard = () => {
         id: user.uid,
       },
     ];
-    console.log(1,contributors)
     const oweID = "owe_id_" + uuid();
     const totalcontributors = contributors.length;
     const amountDistributed =
@@ -121,12 +122,12 @@ const Dashboard = () => {
     const customId = "custom_id_" + uuid();
     calculatedOwe[customId] = updatedDebtData;
     const expenseEqual = {
-      creator: user.email,
+      creator: user.displayName,
       id: customId,
       description: equalExpenseHandle.desc,
       totalAmount: equalExpenseHandle.totalAmount,
       paidBy: paidByFriend,
-      participants:contributors,
+      participants: contributors,
       owed: calculatedOwe,
       image: imageURL,
     };
@@ -139,7 +140,6 @@ const Dashboard = () => {
         desc: "",
         totalAmount: "",
       });
-
       setPaidByFriend([]);
       setSelectedFriends([]);
       setBillImage(null);
@@ -163,9 +163,17 @@ const Dashboard = () => {
     if (
       !splitUnEqualData.description ||
       !splitUnEqualData.totalAmount ||
-      selectedFriendsUnEqual.length === 0
+      !selectedFriendsUnEqual ||
+      !billImage ||
+      !splitUnEqualData.date ||
+      splitUnEqualData.totalAmount < 0 ||
+      selectedFriendsUnEqual.some(
+        (friend) => friend.order < 0 || friend.paid < 0
+      )
     ) {
-      toast.error("Please fill in all fields.");
+      toast.error(
+        "Please fill in all required fields and ensure no negative values."
+      );
       return;
     }
     const customId = "custom_id_" + uuid();
@@ -181,7 +189,6 @@ const Dashboard = () => {
     ];
     let totalOrder = 0;
     let totalPaid = 0;
-
     mySelectedData.forEach((contributor) => {
       const order = parseInt(contributor.order);
       const paid = parseInt(contributor.paid);
@@ -194,10 +201,12 @@ const Dashboard = () => {
         totalPaid += paid;
       }
     });
-
+    const totalOrderRounded = Math.round(totalOrder);
+    const totalPaidRounded = Math.round(totalPaid);
+    const totalAmountRounded = Math.round(splitUnEqualData.totalAmount);
     if (
-      !totalOrder == splitUnEqualData.totalAmount ||
-      !totalPaid == splitUnEqualData.totalAmount
+      totalOrderRounded !== totalAmountRounded ||
+      totalPaidRounded !== totalAmountRounded
     ) {
       toast.error(
         "Total order and total paid amounts must equal the total amount."
@@ -237,17 +246,6 @@ const Dashboard = () => {
           }
         });
       });
-
-      contributors.forEach((contributor) => {
-        if (contributor.owed > 0) {
-          oweDetails.push({
-            debitor: "group",
-            creditor: contributor.label,
-            amount: contributor.owed,
-          });
-        }
-      });
-
       calculatedOwe[customId] = oweDetails;
     });
     try {
@@ -267,7 +265,6 @@ const Dashboard = () => {
       const userDocRef = doc(database, "expense", customId);
       await setDoc(userDocRef, expenseData);
       toast.success("Expense is created successfully");
-
       setSelectedFriendsUnEqual((prevSelectedFriends) =>
         prevSelectedFriends.map((friend) => ({
           ...friend,
@@ -318,7 +315,6 @@ const Dashboard = () => {
           "friends",
           addFriendData.id
         );
-        console.log("db", friendDbData);
         try {
           await setDoc(friendDbData, addFriendData);
           setFriend((prevFriends) => [...prevFriends, addFriendData]);
@@ -456,13 +452,6 @@ const Dashboard = () => {
                     onChange={setPaidByFriend}
                     className={styles.Select}
                   />
-                  <div className="text-white"> Date</div>{" "}
-                  <input
-                    type="date"
-                    onChange={equalExpenseData}
-                    name="date"
-                    value={equalExpenseHandle.date}
-                  />
                   <div className="text-white"> Description</div>{" "}
                   <input
                     type="text"
@@ -470,6 +459,16 @@ const Dashboard = () => {
                     name="desc"
                     value={equalExpenseHandle.desc}
                     placeholder="Description"
+                    className="w-75"
+                  />
+                  <div className="text-white"> Date</div>{" "}
+                  <input
+                    type="date"
+                    onChange={equalExpenseData}
+                    name="date"
+                    value={equalExpenseHandle.date}
+                    className="w-75"
+                    max={new Date().toISOString().split("T")[0]}
                   />
                   <div className="text-white"> Total Amount</div>{" "}
                   <input
@@ -478,12 +477,26 @@ const Dashboard = () => {
                     name="totalAmount"
                     value={equalExpenseHandle.totalAmount}
                     placeholder="Enter Amount"
+                    className="w-75"
                   />
                   <div className="text-white"> Image</div>{" "}
                   <input
                     type="file"
-                    onChange={(e) => setBillImage(e.target.files[0])}
+                    onChange={(e) => {
+                      const selectedFile = e.target.files[0];
+                      if (selectedFile) {
+                        const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+                        if (allowedTypes.includes(selectedFile.type)) {
+                          setBillImage(selectedFile);
+                        } else {
+                          toast.warning("Please select a PNG, JPG, or JPEG file.");
+                          e.target.value = null;
+                        }
+                      }
+                    }}
+                    accept=".png, .jpg, .jpeg"
                     name="img"
+                    className="w-75"
                   />
                   {btnLoading ? (
                     <>
@@ -532,122 +545,107 @@ const Dashboard = () => {
                 <h2>Divide Expense</h2>
                 <form
                   onSubmit={splitUnEqualExpense}
-                  className={`${styles.formStyle} mx-auto text-center`}
+                  className={`${styles.formStyle}`}
                 >
-                  <table className={styles.inputTable}>
-                    <tbody>
-                      <tr>
-                        <td>Date</td>
-                        <td>
-                          <input
-                            type="date"
-                            name="date"
-                            value={splitUnEqualData.date}
-                            onChange={handleInputChangeUnEqual}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Description</td>
-                        <td>
-                          <input
-                            type="text"
-                            name="description"
-                            value={splitUnEqualData.description}
-                            onChange={handleInputChangeUnEqual}
-                            placeholder="Description"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Total Amount</td>
-                        <td>
-                          <input
-                            type="number"
-                            name="totalAmount"
-                            value={splitUnEqualData.totalAmount}
-                            onChange={handleInputChangeUnEqual}
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Image</td>
-                        <td>
-                          <input
-                            type="file"
-                            onChange={(e) => setBillImage(e.target.files[0])}
-                            name="img"
-                          />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Selected Users</td>
-                        <td>
-                          <MultiSelect
-                            options={friend.map((user) => ({
-                              value: user.email,
-                              label: user.name,
-                              id: user.id,
-                            }))}
-                            value={selectedFriendsUnEqual}
-                            onChange={setSelectedFriendsUnEqual}
-                            className={styles.customMultiSelect}
-                          />
-                          <p>
-                            Selected Users:{" "}
-                            {selectedFriendsUnEqual
-                              .map((user) => user.label)
-                              .join(", ")}
-                          </p>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>{user.displayName}</td>
-                        <td>
-                          <div className={styles.orderAmount}>
-                            <div className="d-flex justify-content-around">
-                              <p>Order</p>
-                              <input
-                                type="number"
-                                value={currUser.order}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "order",
-                                    parseInt(e.target.value)
-                                  )
+                  <div className="table-responsive-lg">
+                    <table
+                      className={`${styles.inputTable} table text-white table-borderless w-75`}
+                    >
+                      <tbody>
+                        <tr>
+                          <td>Date</td>
+                          <td>
+                            <input
+                              type="date"
+                              name="date"
+                              value={splitUnEqualData.date}
+                              onChange={handleInputChangeUnEqual}
+                              className="w-75"
+                              max={new Date().toISOString().split("T")[0]}
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Description</td>
+                          <td>
+                            <input
+                              type="text"
+                              name="description"
+                              value={splitUnEqualData.description}
+                              onChange={handleInputChangeUnEqual}
+                              placeholder="Description"
+                              className="w-75"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Total Amount</td>
+                          <td>
+                            <input
+                              type="number"
+                              name="totalAmount"
+                              value={splitUnEqualData.totalAmount}
+                              onChange={handleInputChangeUnEqual}
+                              className="w-75"
+                            />
+                          </td>
+                        </tr>
+                        <tr className="w-50 mb-5 p-4">
+                          <td>Image</td>
+                          <td>
+                            <input
+                              type="file"
+                              onChange={(e) => {
+                                const selectedFile = e.target.files[0];
+                                if (selectedFile) {
+                                  const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+                                  if (allowedTypes.includes(selectedFile.type)) {
+                                    setBillImage(selectedFile);
+                                  } else {
+                                    toast.warning("Please select a PNG, JPG, or JPEG file.");
+                                    e.target.value = null;
+                                  }
                                 }
-                              />
-                            </div>
-                            <div className="d-flex justify-content-around">
-                              <p>Paid</p>
-                              <input
-                                type="number"
-                                value={currUser.paid}
-                                onChange={(e) =>
-                                  handleInputChange(
-                                    "paid",
-                                    parseInt(e.target.value)
-                                  )
-                                }
-                              />
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                      {selectedFriendsUnEqual.map((user) => (
-                        <tr key={user.id}>
-                          <td>{user.label}</td>
+                              }}
+                              name="img"
+                              accept=".png, .jpg, .jpeg"
+                              className="w-75"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>Selected Users</td>
+                          <td>
+                            <MultiSelect
+                              options={friend.map((user) => ({
+                                value: user.email,
+                                label: user.name,
+                                id: user.id,
+                              }))}
+                              value={selectedFriendsUnEqual}
+                              onChange={setSelectedFriendsUnEqual}
+                              className={styles.customMultiSelect}
+                            />
+                            <p>
+                              Selected Users:{" "}
+                              {selectedFriendsUnEqual
+                                .map((user) => user.label)
+                                .join(", ")}
+                            </p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>{user.displayName}</td>
                           <td>
                             <div className={styles.orderAmount}>
                               <div className="d-flex justify-content-around">
                                 <p>Order</p>
                                 <input
                                   type="number"
-                                  name={`order-${user.id}`}
-                                  value={user.order}
+                                  value={currUser.order}
                                   onChange={(e) =>
-                                    handleOrderChange(
-                                      user.id,
+                                    handleInputChange(
+                                      "order",
                                       parseInt(e.target.value)
                                     )
                                   }
@@ -657,11 +655,10 @@ const Dashboard = () => {
                                 <p>Paid</p>
                                 <input
                                   type="number"
-                                  name={`paid-${user.id}`}
-                                  value={user.paid}
+                                  value={currUser.paid}
                                   onChange={(e) =>
-                                    handlePaidChange(
-                                      user.id,
+                                    handleInputChange(
+                                      "paid",
                                       parseInt(e.target.value)
                                     )
                                   }
@@ -670,9 +667,46 @@ const Dashboard = () => {
                             </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                        {selectedFriendsUnEqual.map((user) => (
+                          <tr key={user.id}>
+                            <td>{user.label}</td>
+                            <td>
+                              <div className={styles.orderAmount}>
+                                <div className="d-flex justify-content-around">
+                                  <p>Order</p>
+                                  <input
+                                    type="number"
+                                    name={`order-${user.id}`}
+                                    value={user.order}
+                                    onChange={(e) =>
+                                      handleOrderChange(
+                                        user.id,
+                                        Math.max(parseInt(e.target.value), 0)
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <div className="d-flex justify-content-around">
+                                  <p>Paid</p>
+                                  <input
+                                    type="number"
+                                    name={`paid-${user.id}`}
+                                    value={user.paid}
+                                    onChange={(e) =>
+                                      handlePaidChange(
+                                        user.id,
+                                        Math.max(parseInt(e.target.value), 0)
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                   {btnLoading ? (
                     <>
                       <Bars
